@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Trophy, ShieldCheck, Users, ArrowRight, Mail, Lock, UserRound, Activity, LogOut, CheckCircle2, Eye, EyeOff } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const rawApi = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const cleanApi = rawApi.replace(/\/+$/, "");
+const API = cleanApi.endsWith("/api") ? cleanApi : `${cleanApi}/api`;
+
 const saveSession = (data) => { localStorage.setItem("sportio_token", data.token); localStorage.setItem("sportio_user", JSON.stringify(data.user)); };
 const getSession = () => { try { return JSON.parse(localStorage.getItem("sportio_user")); } catch { return null; } };
 
@@ -27,10 +30,17 @@ export default function App() {
 
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value });
   const request = async (path, body) => {
-    const response = await fetch(`${API}/auth/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Something went wrong.");
-    return data;
+    try {
+      const response = await fetch(`${API}/auth/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Something went wrong.");
+      return data;
+    } catch (err) {
+      if (err.message === "Failed to fetch") {
+        throw new Error("Unable to connect to backend. The server may be starting up, or check your VITE_API_URL and network access.");
+      }
+      throw err;
+    }
   };
   const submit = async (e) => {
     e.preventDefault(); setError(""); setMessage(""); setBusy(true);
