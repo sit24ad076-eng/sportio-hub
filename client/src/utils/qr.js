@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * Lightweight pure JavaScript QR Code Generator (SVG).
  * Implements QR Code Model 2 with Reed-Solomon Error Correction.
@@ -289,23 +291,21 @@ export function QRCodeSVG({ value, size = 180, fgColor = "#112f45", bgColor = "#
       }
     }
 
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        style={{ display: "block", borderRadius: "10px", background: bgColor, padding: "10px", boxSizing: "content-box" }}
-        dangerouslySetInnerHTML={{
-          __html: `<rect width="100%" height="100%" fill="${bgColor}" />` + rects.join(""),
-        }}
-      />
-    );
+    return React.createElement("svg", {
+      width: size,
+      height: size,
+      viewBox: `0 0 ${size} ${size}`,
+      style: { display: "block", borderRadius: "10px", background: bgColor, padding: "10px", boxSizing: "content-box" },
+      dangerouslySetInnerHTML: {
+        __html: `<rect width="100%" height="100%" fill="${bgColor}" />` + rects.join(""),
+      },
+    });
   } catch (err) {
     console.warn("QR generation fallback:", err);
-    return (
-      <div style={{ width: size, height: size, background: "#f0f4f7", display: "grid", placeItems: "center", borderRadius: "8px" }}>
-        <span style={{ fontSize: "11px", color: "#64748b" }}>QR Preview</span>
-      </div>
+    return React.createElement(
+      "div",
+      { style: { width: size, height: size, background: "#f0f4f7", display: "grid", placeItems: "center", borderRadius: "8px" } },
+      React.createElement("span", { style: { fontSize: "11px", color: "#64748b" } }, "QR Preview")
     );
   }
 }
