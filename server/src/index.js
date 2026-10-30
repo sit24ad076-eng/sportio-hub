@@ -53,29 +53,40 @@ if (fs.existsSync(clientDist)) {
   });
 }
 
+// Connect to MongoDB with timeout and automatic retry
+let isConnected = false;
+async function connectDB() {
+  if (isConnected || mongoose.connection.readyState === 1 || !process.env.MONGODB_URI) return;
+  try {
+    const db = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    isConnected = db.connections[0].readyState === 1;
+    console.log("MongoDB connected successfully");
+  } catch (err) {
+    console.error("MongoDB connection failed:", err.message);
+    console.error("Tip: Add 0.0.0.0/0 to MongoDB Atlas Network Access whitelist.");
+    if (!process.env.VERCEL) setTimeout(connectDB, 10000);
+  }
+}
+
+// Ensure DB connection is initiated before API requests
+app.use(async (_req, _res, next) => {
+  await connectDB();
+  next();
+});
+
 const port = process.env.PORT || 5000;
 if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
   console.warn("Warning: Missing MONGODB_URI or JWT_SECRET in environment variables.");
 }
 
-// Start listening immediately on 0.0.0.0 so hosting providers can verify health
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Sportio Hub API running on http://0.0.0.0:${port}`);
-});
-
-// Connect to MongoDB with timeout and automatic retry
-async function connectDB() {
-  if (!process.env.MONGODB_URI) return;
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log("MongoDB connected successfully");
-  } catch (err) {
-    console.error("MongoDB connection failed:", err.message);
-    console.error("Tip: Add 0.0.0.0/0 to MongoDB Atlas Network Access whitelist.");
-    setTimeout(connectDB, 10000);
-  }
+// Only listen when running as a standalone server, not inside Vercel serverless
+if (!process.env.VERCEL) {
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Sportio Hub API running on http://0.0.0.0:${port}`);
+  });
+  connectDB();
 }
 
-connectDB();
+export default app;
