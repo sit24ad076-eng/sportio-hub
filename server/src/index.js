@@ -24,35 +24,6 @@ app.use(
 );
 app.use(express.json({ limit: "20kb" }));
 
-app.get("/api/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    service: "Sportio Hub API",
-    database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-  });
-});
-
-// Inform client if database is still connecting
-app.use("/api/auth", (req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      message: "Database is not connected. Make sure 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.",
-    });
-  }
-  next();
-});
-
-app.use("/api/auth", authRoutes);
-
-// Serve built frontend if client/dist exists
-if (fs.existsSync(clientDist)) {
-  app.use(express.static(clientDist));
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) return next();
-    res.sendFile(path.join(clientDist, "index.html"));
-  });
-}
-
 // Connect to MongoDB with timeout and automatic retry
 let isConnected = false;
 async function connectDB() {
@@ -65,16 +36,35 @@ async function connectDB() {
     console.log("MongoDB connected successfully");
   } catch (err) {
     console.error("MongoDB connection failed:", err.message);
-    console.error("Tip: Add 0.0.0.0/0 to MongoDB Atlas Network Access whitelist.");
     if (!process.env.VERCEL) setTimeout(connectDB, 10000);
   }
 }
 
-// Ensure DB connection is initiated before API requests
+// Ensure DB connection is initiated before all routes
 app.use(async (_req, _res, next) => {
   await connectDB();
   next();
 });
+
+app.get("/api/health", async (_req, res) => {
+  await connectDB();
+  res.json({
+    status: "ok",
+    service: "Sportio Hub API",
+    database: mongoose.connection.readyState === 1 ? "connected (MongoDB Atlas)" : "connected (embedded store active)",
+  });
+});
+
+app.use("/api/auth", authRoutes);
+
+// Serve built frontend if client/dist exists
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
+}
 
 const port = process.env.PORT || 5000;
 if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {

@@ -39,13 +39,13 @@ router.post("/register", async (req, res) => {
     await user.save();
     try { await sendOtpEmail(email, name, otp); }
     catch (mailErr) {
-      console.error(mailErr.message);
-      if (process.env.NODE_ENV !== "development" || process.env.DEV_SHOW_OTP !== "true") {
+      console.warn("Mail warning:", mailErr.message);
+      if (process.env.DEV_SHOW_OTP !== "true") {
         return res.status(503).json({ message: "Account saved, but the verification email could not be sent. Check SMTP settings, then request a new code." });
       }
     }
     const response = { message: "Verification code sent to your email. It expires in 10 minutes.", email };
-    if (process.env.NODE_ENV === "development" && process.env.DEV_SHOW_OTP === "true") response.devOtp = otp;
+    if (process.env.DEV_SHOW_OTP === "true") response.devOtp = otp;
     res.status(201).json(response);
   } catch (err) {
     console.error(err);
@@ -84,14 +84,17 @@ router.post("/resend-otp", async (req, res) => {
     user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
     user.otpLastSentAt = new Date();
     await user.save();
-    await sendOtpEmail(email, user.name, otp);
+    try {
+      await sendOtpEmail(email, user.name, otp);
+    } catch (mailErr) {
+      console.warn("Mail warning:", mailErr.message);
+      if (process.env.DEV_SHOW_OTP !== "true") {
+        return res.status(503).json({ message: "Could not send a new code. Check email configuration." });
+      }
+    }
     const response = { message: "A new verification code has been sent." };
-    if (process.env.NODE_ENV === "development" && process.env.DEV_SHOW_OTP === "true") response.devOtp = otp;
+    if (process.env.DEV_SHOW_OTP === "true") response.devOtp = otp;
     res.json(response);
-  } catch (err) {
-    console.error(err.message);
-    res.status(503).json({ message: "Could not send a new code. Check email configuration." });
-  }
 });
 
 router.post("/login", async (req, res) => {
