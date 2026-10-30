@@ -1,0 +1,28 @@
+[
+  {
+    "_id": "74e28f7e-0066-4a81-bedc-49dc2d685a60",
+    "name": "Test User",
+    "email": "test@example.com",
+    "passwordHash": "hash123",
+    "role": "athlete",
+    "emailVerified": false,
+    "otpHash": null,
+    "otpExpiresAt": null,
+    "otpLastSentAt": null,
+    "createdAt": "2026-10-30T16:13:29.183Z",
+    "updatedAt": "2026-10-30T16:13:29.183Z"
+  },
+  {
+    "_id": "416a7990-42a8-4411-9c90-d33396cbf958",
+    "name": "SAKTHI PRIYA A",
+    "email": "sakthipriya03112006@gmail.com",
+    "passwordHash": "$2a$12$ygiY6Tb9KDtXGc.H2e7Ne.dbWb.qmp4Jmk7Q1c1vQHU6/a45hrdLG",
+    "role": "athlete",
+    "emailVerified": false,
+    "otpHash": "9047f0115234c12c62906541c2803d620d66a345998f01df771a818ce4763cab",
+    "otpExpiresAt": "2026-10-30T18:25:09.062Z",
+    "otpLastSentAt": "2026-10-30T18:15:09.063Z",
+    "createdAt": "2026-10-30T18:15:09.058Z",
+    "updatedAt": "2026-10-30T18:15:09.063Z"
+  }
+]

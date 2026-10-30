@@ -7,6 +7,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import authRoutes from "./routes/auth.js";
+import drillRoutes from "./routes/drills.js";
+import identityRoutes from "./routes/identity.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +24,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: "20kb" }));
+app.use(express.json({ limit: "5mb" }));
 
 // Connect to MongoDB with timeout and automatic retry
 let isConnected = false;
@@ -56,6 +58,8 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/drills", drillRoutes);
+app.use("/api/identity", identityRoutes);
 
 // Serve built frontend if client/dist exists
 if (fs.existsSync(clientDist)) {
