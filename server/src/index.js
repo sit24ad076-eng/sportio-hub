@@ -7,7 +7,26 @@ import authRoutes from "./routes/auth.js";
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
+const clientOriginEnv = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const allowedOrigins = clientOriginEnv.split(",").map((s) => s.trim().replace(/\/$/, ""));
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, health checks)
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes("*") ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app")
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked request from origin: ${origin}`));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "20kb" }));
 
 app.get("/api/health", (_req, res) => {
