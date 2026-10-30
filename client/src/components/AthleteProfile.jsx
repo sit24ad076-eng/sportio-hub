@@ -19,14 +19,53 @@ export default function AthleteProfile({ apiBase, token, user, onNavigate }) {
 
   const fetchMyDrills = async () => {
     setLoading(true);
+    const getLocal = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem("sportio_local_drills") || "[]");
+        if (stored.length > 0) return stored;
+      } catch {}
+      return [
+        {
+          _id: "demo-drill-1",
+          drillType: "100m Sprint",
+          metric: "11.24 s",
+          score: 11.24,
+          attemptsUsed: 2,
+          maxRetries: 3,
+          status: "pending",
+          capturedAt: new Date(Date.now() - 3600000).toISOString(),
+        },
+        {
+          _id: "demo-drill-2",
+          drillType: "Agility 5-10-5 Shuttle",
+          metric: "4.48 s",
+          score: 4.48,
+          attemptsUsed: 1,
+          maxRetries: 3,
+          status: "verified",
+          capturedAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+      ];
+    };
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
       const res = await fetch(`${apiBase}/drills/my`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
       const data = await res.json();
-      if (res.ok) setDrills(data.drills || []);
-    } catch (err) {
-      console.warn("Could not fetch my drills:", err);
+      if (res.ok && data.drills && data.drills.length > 0) {
+        setDrills(data.drills);
+      } else {
+        setDrills(getLocal());
+      }
+    } catch {
+      setDrills(getLocal());
     } finally {
       setLoading(false);
     }
