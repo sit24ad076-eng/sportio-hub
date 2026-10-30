@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Trophy, ShieldCheck, Users, ArrowRight, Mail, Lock, UserRound, Activity, LogOut, CheckCircle2, Eye, EyeOff } from "lucide-react";
 
-const rawApi = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-const cleanApi = rawApi.replace(/\/+$/, "");
-const API = cleanApi.endsWith("/api") ? cleanApi : `${cleanApi}/api`;
+const rawApi = import.meta.env.VITE_API_URL || "/api";
+const API = rawApi.startsWith("http")
+  ? (rawApi.replace(/\/+$/, "").endsWith("/api") ? rawApi.replace(/\/+$/, "") : `${rawApi.replace(/\/+$/, "")}/api`)
+  : "/api";
 
 const saveSession = (data) => { localStorage.setItem("sportio_token", data.token); localStorage.setItem("sportio_user", JSON.stringify(data.user)); };
 const getSession = () => { try { return JSON.parse(localStorage.getItem("sportio_user")); } catch { return null; } };

@@ -3,7 +3,14 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import helmet from "helmet";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 import authRoutes from "./routes/auth.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDist = path.resolve(__dirname, "../../client/dist");
 
 const app = express();
 app.use(helmet({ crossOriginResourcePolicy: false }));
@@ -36,6 +43,15 @@ app.use("/api/auth", (req, res, next) => {
 });
 
 app.use("/api/auth", authRoutes);
+
+// Serve built frontend if client/dist exists
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
+}
 
 const port = process.env.PORT || 5000;
 if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
